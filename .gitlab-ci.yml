@@ -2,8 +2,6 @@ image: localhost:5000/gko-cuda100-gnu7-llvm60
 
 stages:
   - sync
-  - build
-  - test
   - code_quality
   - deploy
   - QoS_tools
@@ -106,272 +104,31 @@ sync:
   except:
     - schedules
 
-# Build jobs
-build/cuda90/gcc/all/debug/shared:
-  <<: *default_build
-  image: localhost:5000/gko-cuda90-gnu5-llvm39
-  variables:
-    <<: *default_variables
-    BUILD_OMP: "ON"
-    BUILD_CUDA: "ON"
-    BUILD_TYPE: Debug
-    EXTRA_CMAKE_FLAGS: &cuda_flags_shared
-      "-DGINKGO_CUDA_ARCHITECTURES=35 -DBUILD_SHARED_LIBS=ON"
-
-build/cuda90/clang/all/release/static:
-  <<: *default_build
-  image: localhost:5000/gko-cuda90-gnu5-llvm39
-  variables:
-    <<: *default_variables
-    C_COMPILER: clang
-    CXX_COMPILER: clang++
-    BUILD_OMP: "ON"
-    BUILD_CUDA: "ON"
-    BUILD_TYPE: Release
-    EXTRA_CMAKE_FLAGS: &cuda_flags_static
-      "-DGINKGO_CUDA_ARCHITECTURES=35 -DBUILD_SHARED_LIBS=OFF"
-
-# cuda 9.1 and friends
-build/cuda91/gcc/all/debug/static:
-  <<: *default_build
-  image: localhost:5000/gko-cuda91-gnu6-llvm40
-  variables:
-    <<: *default_variables
-    BUILD_OMP: "ON"
-    BUILD_CUDA: "ON"
-    BUILD_TYPE: Debug
-    EXTRA_CMAKE_FLAGS: *cuda_flags_static
-
-build/cuda91/clang/all/release/shared:
-  <<: *default_build
-  image: localhost:5000/gko-cuda91-gnu6-llvm40
-  variables:
-    <<: *default_variables
-    C_COMPILER: clang
-    CXX_COMPILER: clang++
-    BUILD_OMP: "ON"
-    BUILD_CUDA: "ON"
-    BUILD_TYPE: Release
-    EXTRA_CMAKE_FLAGS: *cuda_flags_shared
-
-# cuda 9.2 and friends
-build/cuda92/gcc/all/release/shared:
-  <<: *default_build
-  image: localhost:5000/gko-cuda92-gnu7-llvm50
-  variables:
-    <<: *default_variables
-    BUILD_OMP: "ON"
-    BUILD_CUDA: "ON"
-    BUILD_TYPE: Release
-    EXTRA_CMAKE_FLAGS: *cuda_flags_shared
-
-build/cuda92/clang/all/debug/static:
-  <<: *default_build
-  image: localhost:5000/gko-cuda92-gnu7-llvm50
-  variables:
-    <<: *default_variables
-    C_COMPILER: clang
-    CXX_COMPILER: clang++
-    BUILD_OMP: "ON"
-    BUILD_CUDA: "ON"
-    BUILD_TYPE: Debug
-    EXTRA_CMAKE_FLAGS: *cuda_flags_static
-
-# cuda 10.0 and friends
-build/cuda100/gcc/all/debug/shared:
-  <<: *default_build
-  image: localhost:5000/gko-cuda100-gnu7-llvm60
-  variables:
-    <<: *default_variables
-    BUILD_OMP: "ON"
-    BUILD_CUDA: "ON"
-    BUILD_TYPE: Debug
-    EXTRA_CMAKE_FLAGS: *cuda_flags_shared
-
-build/cuda100/clang/all/release/static:
-  <<: *default_build
-  image: localhost:5000/gko-cuda100-gnu7-llvm60
-  variables:
-    <<: *default_variables
-    C_COMPILER: clang
-    CXX_COMPILER: clang++
-    BUILD_OMP: "ON"
-    BUILD_CUDA: "ON"
-    BUILD_TYPE: Release
-    EXTRA_CMAKE_FLAGS: *cuda_flags_static
-
-# no cuda but latest gcc and "soon" clang 7
-build/nocuda/gcc/core/debug/static:
-  <<: *default_build
-  image: localhost:5000/gko-nocuda-gnu8-llvm70
-  variables:
-    <<: *default_variables
-    BUILD_REFERENCE: "OFF"
-    BUILD_TYPE: Debug
-    EXTRA_CMAKE_FLAGS: &flags_static
-      -DBUILD_SHARED_LIBS=OFF
-
-build/nocuda/clang/core/release/shared:
-  <<: *default_build
-  image: localhost:5000/gko-nocuda-gnu8-llvm70
-  variables:
-    <<: *default_variables
-    C_COMPILER: clang
-    CXX_COMPILER: clang++
-    BUILD_REFERENCE: "OFF"
-    BUILD_TYPE: Release
-    EXTRA_CMAKE_FLAGS: &flags_shared
-      -DBUILD_SHARED_LIBS=ON
-
-build/nocuda/gcc/omp/release/shared:
-  <<: *default_build
-  image: localhost:5000/gko-nocuda-gnu8-llvm70
-  variables:
-    <<: *default_variables
-    BUILD_OMP: "ON"
-    BUILD_REFERENCE: "ON"
-    BUILD_TYPE: Release
-    EXTRA_CMAKE_FLAGS: *flags_shared
-
-build/nocuda/clang/omp/debug/static:
-  <<: *default_build
-  image: localhost:5000/gko-nocuda-gnu8-llvm70
-  variables:
-    <<: *default_variables
-    BUILD_OMP: "ON"
-    BUILD_REFERENCE: "ON"
-    BUILD_TYPE: Debug
-    EXTRA_CMAKE_FLAGS: *flags_static
-
-# Test jobs
-test/cuda90/gcc/all/debug/shared:
-  <<: *default_test
-  image: localhost:5000/gko-cuda90-gnu5-llvm39
-  dependencies:
-    - build/cuda90/gcc/all/debug/shared
-
-test/cuda90/clang/all/release/static:
-  <<: *default_test
-  image: localhost:5000/gko-cuda90-gnu5-llvm39
-  dependencies:
-    - build/cuda90/clang/all/release/static
-
-# cuda 9.1 and friends
-test/cuda91/gcc/all/debug/static:
-  <<: *default_test
-  image: localhost:5000/gko-cuda91-gnu6-llvm40
-  dependencies:
-    - build/cuda91/gcc/all/debug/static
-
-test/cuda91/clang/all/release/shared:
-  <<: *default_test
-  image: localhost:5000/gko-cuda91-gnu6-llvm40
-  dependencies:
-    - build/cuda91/clang/all/release/shared
-
-# cuda 9.2 and friends
-test/cuda92/gcc/all/release/shared:
-  <<: *default_test
-  image: localhost:5000/gko-cuda92-gnu7-llvm50
-  dependencies:
-    - build/cuda92/gcc/all/release/shared
-
-test/cuda92/clang/all/debug/static:
-  <<: *default_test
-  image: localhost:5000/gko-cuda92-gnu7-llvm50
-  dependencies:
-    - build/cuda92/clang/all/debug/static
-
-# cuda 10.0 and friends
-test/cuda100/gcc/all/debug/shared:
-  <<: *default_test
-  image: localhost:5000/gko-cuda100-gnu7-llvm60
-  dependencies:
-    - build/cuda100/gcc/all/debug/shared
-
-test/cuda100/clang/all/release/static:
-  <<: *default_test
-  image: localhost:5000/gko-cuda100-gnu7-llvm60
-  dependencies:
-    - build/cuda100/clang/all/release/static
-
-# no cuda but latest gcc and "soon" clang 7
-test/nocuda/gcc/core/debug/static:
-  <<: *default_test
-  image: localhost:5000/gko-nocuda-gnu8-llvm70
-  dependencies:
-    - build/nocuda/gcc/core/debug/static
-
-test/nocuda/clang/core/release/shared:
-  <<: *default_test
-  image: localhost:5000/gko-nocuda-gnu8-llvm70
-  dependencies:
-    - build/nocuda/clang/core/release/shared
-
-test/nocuda/gcc/omp/release/shared:
-  <<: *default_test
-  image: localhost:5000/gko-nocuda-gnu8-llvm70
-  dependencies:
-    - build/nocuda/gcc/omp/release/shared
-
-test/nocuda/clang/omp/debug/static:
-  <<: *default_test
-  image: localhost:5000/gko-nocuda-gnu8-llvm70
-  dependencies:
-    - build/nocuda/clang/omp/debug/static
-
-
-# Job with important warnings as error
-warnings:
-  <<: *default_build
+# Code analysis and reporting tool
+sonarqube:
   stage: code_quality
   image: localhost:5000/gko-cuda100-gnu7-llvm60
+  script:
+    - mkdir -p ${CI_JOB_NAME} && cd ${CI_JOB_NAME}
+    - cmake ${CI_PROJECT_DIR}
+        -DCMAKE_C_COMPILER=${C_COMPILER} -DCMAKE_CXX_COMPILER=${CXX_COMPILER}
+        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DCMAKE_CXX_FLAGS="${CXX_FLAGS}"
+        -DCMAKE_CUDA_HOST_COMPILER=$(which ${CXX_COMPILER}) ${EXTRA_CMAKE_FLAGS}
+        -DGINKGO_DEVEL_TOOLS=OFF -DGINKGO_BUILD_REFERENCE=${BUILD_REFERENCE}
+        -DGINKGO_BUILD_OMP=${BUILD_OMP} -DGINKGO_BUILD_CUDA=${BUILD_CUDA}
+        -DGINKGO_BUILD_TESTS=ON -DGINKGO_BUILD_EXAMPLES=ON
+    - build-wrapper-linux-x86-64 --out-dir bw-output make -j$(grep "core id"
+      /proc/cpuinfo | sort -u | wc -l)
+    - cd ${CI_PROJECT_DIR}
+    - sonar-scanner -Dsonar.login=${SONARQUBE_LOGIN}
+      -Dsonar.cfamily.build-wrapper-output=${CI_JOB_NAME}/bw-output
   variables:
     <<: *default_variables
     BUILD_OMP: "ON"
     BUILD_CUDA: "ON"
-    CXX_FLAGS: "-Werror=pedantic -pedantic-errors"
   dependencies: []
   allow_failure: yes
 
-# Ensure kernel modules do not depend on core
-no-circular-deps:
-  <<: *default_build
-  stage: code_quality
-  image: localhost:5000/gko-cuda100-gnu7-llvm60
-  variables:
-    <<: *default_variables
-    BUILD_OMP: "ON"
-    BUILD_CUDA: "ON"
-    EXTRA_CMAKE_FLAGS: '-DCMAKE_SHARED_LINKER_FLAGS="-Wl,--no-undefined"
-      -DCMAKE_EXE_LINKER_FLAGS="-Wl,--no-undefined"'
-  dependencies: []
-  allow_failure: no
-
-# Run clang-tidy and iwyu
-clang-tidy:
-  <<: *default_build
-  stage: code_quality
-  image: localhost:5000/gko-cuda100-gnu7-llvm60
-  variables:
-    <<: *default_variables
-    BUILD_OMP: "ON"
-    BUILD_CUDA: "ON"
-    EXTRA_CMAKE_FLAGS: '-DGINKGO_WITH_CLANG_TIDY=ON'
-  dependencies: []
-  allow_failure: yes
-
-iwyu:
-  <<: *default_build
-  stage: code_quality
-  image: localhost:5000/gko-cuda100-gnu7-llvm60
-  variables:
-    <<: *default_variables
-    BUILD_OMP: "ON"
-    BUILD_CUDA: "ON"
-    EXTRA_CMAKE_FLAGS: '-DGINKGO_WITH_IWYU=ON'
-  dependencies: []
-  allow_failure: yes
 
 # Deploy documentation to github-pages
 gh-pages:
